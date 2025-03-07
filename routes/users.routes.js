@@ -10,8 +10,8 @@ router.put("/users/addtocart", authenticateToken, users.addtocart);
 
 router.post("/signup", users.signup);
 router.post("/login", users.login);
-
-router.get("stream-files", authenticateToken, users.streamFiles);
+router.get("/users/getshopdata", authenticateToken, users.getshopdata);
+router.get("/users/stream-files", authenticateToken, users.streamFiles);
 
 router.post("/users/:userId/cart/add", authenticateToken, users.addToCart);
 router.delete(
@@ -25,7 +25,7 @@ router.put(
   users.updateCartQuantity
 );
 
-router.put("/users/:id/profile", authenticateToken, users.updateProfile);
+router.put("/api/users/:id", authenticateToken, users.updateUser);
 
 router.post("/users/:userId/checkout", authenticateToken, users.checkout);
 
@@ -34,4 +34,7 @@ router.get("/users/checkout", authenticateToken, users.getCheckout);
 router.post("/users/placeorder", authenticateToken, users.placeOrder);
 router.get("/users/orders", authenticateToken, users.getOrderById);
 
+// add products
+router.post("/users/addproducts", authenticateToken, users.addProducts);
+router.get("/users/profile", authenticateToken, users.profile);
 module.exports = router;

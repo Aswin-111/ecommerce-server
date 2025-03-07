@@ -4,10 +4,26 @@ const bcrypt = require("bcrypt");
 const fs = require("fs");
 const path = require("path");
 const z = require("zod");
+const mongoose = require("mongoose");
 const Product = require("../models/product.model.js");
 
 const Order = require("../models/order.model.js");
 
+exports.profile = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const user = await User.findById(userId);
+    console.log(user);
+    if (!user) {
+      return res.status(404).send({ message: "User not found" });
+    }
+    res.status(200).send(user);
+  } catch (error) {
+    res.status(500).send({
+      message: error.message || "Some error occurred while fetching the user.",
+    });
+  }
+};
 exports.signup = async (req, res) => {
   try {
     const { fname, lname, email, phone, password } = req.body;
@@ -38,6 +54,55 @@ exports.signup = async (req, res) => {
     res.status(500).send({
       message: error.message || "Some error occurred while creating the user.",
     });
+  }
+};
+
+exports.addProducts = async (req, res) => {
+  try {
+    const products = req.body;
+    // add products to model
+    if (products.length > 0) {
+      await Product.insertMany(products);
+
+      res.status(201).send({ message: "Products added successfully!" });
+    }
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: error.message });
+  }
+};
+exports.updateUser = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const {
+      fname,
+      lname,
+      address,
+      city,
+      state,
+      zipCode,
+      country,
+      phone,
+      email,
+    } = req.body;
+
+    // Find the user by ID and update their information
+    const updatedUser = await User.findByIdAndUpdate(
+      id,
+      { fname, lname, address, city, state, zipCode, country, phone, email },
+      { new: true } // Return the updated user
+    );
+
+    if (!updatedUser) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res
+      .status(200)
+      .json({ message: "User updated successfully", user: updatedUser });
+  } catch (error) {
+    console.error("Error updating user:", error);
+    res.status(500).json({ message: "Failed to update user" });
   }
 };
 
@@ -146,6 +211,7 @@ exports.login = async (req, res) => {
     }
 
     // Generate JWT token
+    // Generate JWT token
     const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, {
       expiresIn: "10h",
     });
@@ -194,7 +260,6 @@ exports.streamFiles = async (req, res) => {
       });
     }
 
-    res.end(); // End the response after all files have been streamed
     console.log("All files streamed successfully.");
   } catch (error) {
     console.error("Error streaming files:", error);
@@ -205,6 +270,15 @@ exports.streamFiles = async (req, res) => {
   }
 };
 
+exports.getshopdata = async (req, res) => {
+  try {
+    const products = await Product.find();
+    res.status(200).json(products);
+  } catch (error) {
+    console.error("Error fetching products:", error);
+    res.status(500).json({ message: "Error fetching products" });
+  }
+};
 exports.addToCart = async (req, res) => {
   try {
     const { userEmail, productIds, quantity } = req.body;
@@ -436,10 +510,11 @@ exports.getUserOrders = async (req, res) => {
 exports.getCart = async (req, res) => {
   try {
     const userId = req.user.userId;
+
     // Fetch user from database based on userId
     const user = await User.findById(userId);
 
-    console.log(userId);
+    console.log("User ID:", userId); // Debugging
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
@@ -447,18 +522,48 @@ exports.getCart = async (req, res) => {
     // Fetch product details for each item in the cart
     const cartWithProducts = await Promise.all(
       user.cart.map(async (item) => {
-        const product = await Product.findById(item.productId);
-        return {
-          ...(item.toObject ? item.toObject() : item),
-          product,
-        };
+        // Extract the productId and remove quotes (if present)
+        let productId = item.productId;
+
+        // Check if productId is already an ObjectId. If not, convert it to string and remove the quotes
+        if (typeof productId !== "string") {
+          productId = productId.toString(); // Convert to string
+        }
+
+        productId = productId.replace(/'/g, ""); // Remove all single quotes
+        // Validate if it's a valid ObjectId
+        if (!mongoose.Types.ObjectId.isValid(productId)) {
+          console.warn("Invalid productId encountered:", productId); // Log invalid IDs
+          return {
+            ...(item.toObject ? item.toObject() : item),
+            product: null, // Or handle this case as you see fit (e.g., skip the product)
+            error: "Invalid product ID", // Add an error flag
+          };
+        }
+
+        try {
+          const product = await Product.findById(productId);
+          return {
+            ...(item.toObject ? item.toObject() : item),
+            product,
+          };
+        } catch (err) {
+          console.error("Error fetching product:", productId, err);
+          return {
+            ...(item.toObject ? item.toObject() : item),
+            product: null, // Or handle this case as you see fit
+            error: "Failed to fetch product", // Add an error flag
+          };
+        }
       })
     );
 
     res.status(200).json(cartWithProducts);
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Failed to fetch cart" });
+    console.error("General error fetching cart:", error);
+    res
+      .status(500)
+      .json({ message: "Failed to fetch cart", error: error.message });
   }
 };
 
