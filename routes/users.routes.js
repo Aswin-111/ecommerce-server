@@ -13,7 +13,6 @@ router.post("/login", users.login);
 router.get("/users/getshopdata", authenticateToken, users.getshopdata);
 router.get("/users/stream-files", authenticateToken, users.streamFiles);
 
-router.post("/users/:userId/cart/add", authenticateToken, users.addToCart);
 router.delete(
   "/users/:userId/cart/remove/:productId",
   authenticateToken,

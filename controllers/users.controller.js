@@ -459,7 +459,7 @@ exports.deletefromcart = async (req, res) => {
 
 exports.addtocart = async (req, res) => {
   try {
-    console.log(req.body);
+    // console.log(req.body);
     const userId = req.user.userId;
     const productId = req.body.productId;
 
@@ -471,8 +471,16 @@ exports.addtocart = async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
+    const product = await Product.findById(productId);
+    if (!product) {
+      return res.status(404).json({ message: "Product not found" });
+    }
+
     //add the product to the cart
-    const updatedCart = [...user.cart, { productId: productId, quantity: 1 }];
+    const updatedCart = [
+      ...user.cart,
+      { productId: productId, quantity: 1, imageUrl: product.imageUrl },
+    ];
     user.cart = updatedCart;
     console.log(user);
     await user.save();

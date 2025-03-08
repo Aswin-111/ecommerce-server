@@ -30,7 +30,7 @@ app.use("/api/products", productRoutes);
 const orderRoutes = require("./routes/order.routes.js");
 app.use("/api", orderRoutes);
 
-const PORT = 3000;
+const PORT = process.env.PORT || 8080;
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}.`);
 });
