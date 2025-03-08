@@ -14,7 +14,7 @@ app.use(express.json());
 
 // Serve static files from the client/public directory
 app.use(express.static(path.join(__dirname, "products")));
-
+app.use('/assets', express.static(path.join(__dirname, 'public/assets')));
 // MongoDB Connection
 mongoose
   .connect(process.env.MONGO_URI)
