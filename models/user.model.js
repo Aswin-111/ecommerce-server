@@ -1,16 +1,16 @@
 const mongoose = require("mongoose");
 
 const userSchema = new mongoose.Schema({
-  fname: { type: String, required: true },
-  lname: { type: String, required: true },
-  email: { type: String, required: true, unique: true },
+  fname: { type: String },
+  lname: { type: String },
+  email: { type: String },
   phone: { type: String },
   address: { type: String },
   city: { type: String },
   state: { type: String },
   zipCode: { type: String },
   country: { type: String },
-  password: { type: String, required: true },
+  password: { type: String },
   cart: { type: Array, default: [] },
 });
 

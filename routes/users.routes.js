@@ -7,9 +7,12 @@ router.get("/users/cart", authenticateToken, users.getCart);
 // router.delete("/users/:id", authenticateToken, users.delete);
 router.delete("/users/cart", authenticateToken, users.deletefromcart);
 router.put("/users/addtocart", authenticateToken, users.addtocart);
+router.get("/users/settings", authenticateToken, users.settingsDetails);
+router.post("/users/settings", authenticateToken, users.settingsUpdate);
 
 router.post("/signup", users.signup);
 router.post("/login", users.login);
+router.post("/loginwithphone", users.loginwithphone);
 router.get("/users/getshopdata", authenticateToken, users.getshopdata);
 router.get("/users/stream-files", authenticateToken, users.streamFiles);
 

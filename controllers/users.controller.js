@@ -191,13 +191,79 @@ exports.getOrderById = async (req, res) => {
     return res.status(500).json({ message: "Failed to fetch order" });
   }
 };
+exports.settingsDetails = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+
+    //  fetch from orders where userId = userId
+
+    const userdetails = await User.find({ _id: userId });
+
+    if (!userdetails) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    console.log(userdetails);
+    return res.status(200).json({ status: "success", data: userdetails });
+  } catch (error) {
+    console.error(error);
+
+    return res.status(500).json({ message: "Failed to fetch userdetails" });
+  }
+};
+
+exports.settingsUpdate = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const {
+      fname,
+      lname,
+      email,
+      phone,
+      address,
+      city,
+      state,
+      zipCode,
+      country,
+    } = req.body;
+    //  fetch from orders where userId = userId
+
+    const userdetails = await User.find({ userId: userId });
+
+    if (!userdetails) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      {
+        fname,
+        lname,
+        email,
+        phone,
+        address,
+        city,
+        state,
+        zipCode,
+        country,
+      },
+      { new: true }
+    );
+    return res.status(200).json({ status: "success", data: updatedUser });
+  } catch (error) {
+    console.error(error);
+
+    return res
+      .status(500)
+      .json({ message: "Failed to fetch userdetails", error });
+  }
+};
 
 exports.login = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { phone } = req.body;
 
     // Find the user by email
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ phone });
 
     if (!user) {
       return res.status(400).send({ message: "Invalid credentials" });
@@ -226,6 +292,47 @@ exports.login = async (req, res) => {
   }
 };
 
+exports.loginwithphone = async (req, res) => {
+  try {
+    const { phone } = req.body;
+
+    // Find the user by email
+    const user = await User.findOne({ phone });
+
+    if (!user) {
+      const newUser = new User({
+        phone,
+      });
+      await newUser.save();
+      const token = jwt.sign({ userId: newUser._id }, process.env.JWT_SECRET, {
+        expiresIn: "10h",
+      });
+
+      return res
+        .status(200)
+        .json({ message: "User logged in successfully!", token: token });
+    }
+    const newUser = new User({
+      phone,
+    });
+    await newUser.save();
+
+    // Generate JWT token
+    // Generate JWT token
+    const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, {
+      expiresIn: "10h",
+    });
+
+    res
+      .status(200)
+      .send({ message: "User logged in successfully!", token: token });
+  } catch (error) {
+    console.error(error);
+    res.status(500).send({
+      message: error.message || "Some error occurred while logging in.",
+    });
+  }
+};
 exports.streamFiles = async (req, res) => {
   const filenames = ["mannequin1.glb", "mannequin2.glb", "mannequin3.glb"];
 
@@ -461,7 +568,7 @@ exports.addtocart = async (req, res) => {
   try {
     // console.log(req.body);
     const userId = req.user.userId;
-    const productId = req.body.productId;
+    const productId = req.body.productid;
 
     console.log(userId, productId);
     // Fetch user from database based on userId
